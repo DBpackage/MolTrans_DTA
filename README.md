@@ -14,7 +14,7 @@ Just make csv file with this format
 | OC(=O)C=C | MSWATRPPF  |5.568636236 | 0
 
 You can make Label column from pka column by setting any threshold value.
-Make Mydata.csv file and just replace it. then you can simply run...
+Make Mydata.csv file and just replace the Mydata.csv which is I uploaded.
 
 INDEED you can make other directories or other csv files, but if you want to make your own directory, then you need to fix some codes in train.py for data importing.
 
