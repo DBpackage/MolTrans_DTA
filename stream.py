@@ -74,9 +74,10 @@ def drug2emb_encoder(x):
 
 class BIN_Data_Encoder(data.Dataset):
 
-    def __init__(self, list_IDs, labels, df_dti):
+    def __init__(self, list_IDs, labels, pka, df_dti):
         'Initialization'
         self.labels = labels
+        self.pka    = pka  
         self.list_IDs = list_IDs
         self.df = df_dti
         
@@ -93,13 +94,86 @@ class BIN_Data_Encoder(data.Dataset):
         d = self.df.iloc[index]['SMILES']
         p = self.df.iloc[index]['Target Sequence']
         
-        #d_v = drug2single_vector(d)
         d_v, input_mask_d = drug2emb_encoder(d)
         p_v, input_mask_p = protein2emb_encoder(p)
         
-        #print(d_v.shape)
-        #print(input_mask_d.shape)
-        #print(p_v.shape)
-        #print(input_mask_p.shape)
         y = self.labels[index]
-        return d_v, p_v, input_mask_d, input_mask_p, y
+        pka = self.pka[index] 
+        return d_v, p_v, input_mask_d, input_mask_p, y, pka ####
+
+
+def create_fold(data, frac=(0.7, 0.1, 0.2), random_state=None, size=None):
+    """
+    Splits the data into train, validation, and test sets based on the given fractions and size.
+
+    Parameters:
+        data (pandas DataFrame): the input data to split.
+        frac (tuple of floats): the fractions for the train, validation, and test sets, respectively.
+        random_state (int or numpy.random.RandomState): the random state to use for the split.
+        size (float): the size to reduce the original data by, where 1.0 represents the original size.
+
+    Returns:
+        tuple of pandas DataFrames: the train, validation, and test sets.
+    """
+    assert sum(frac) == 1, "Fractions must sum up to 1."
+    assert size is None or size > 0, "Size must be None or greater than 0."
+
+    # Reduce the data size if size argument is provided
+    if size is not None:
+        data = data.sample(frac=size, replace=False, random_state=random_state)
+
+    train_frac, valid_frac, test_frac = frac
+    shuffled_df = data.sample(frac=1, random_state=random_state).reset_index(drop=True)
+
+    # split the data into test and train+valid sets
+    test = shuffled_df.sample(frac=test_frac, replace=False, random_state=random_state)
+    train_valid = shuffled_df[~shuffled_df.index.isin(test.index)]
+
+    # split the train+valid set into train and valid sets
+    train = train_valid.sample(frac=(train_frac/(train_frac+valid_frac)), replace=False, random_state=random_state)
+    valid = train_valid[~train_valid.index.isin(train.index)]
+
+    return train.reset_index(drop=True), valid.reset_index(drop=True), test.reset_index(drop=True)
+
+def rmse(y,f):
+    rmse = sqrt(((y - f)**2).mean(axis=0))
+    return rmse
+
+def mse(y,f):
+    mse = ((y - f)**2).mean(axis=0)
+    return mse
+
+def pearson(y,f):
+    rp = np.corrcoef(y, f)[0,1]
+    return rp
+
+def spearman(y,f):
+    rs = stats.spearmanr(y, f)[0]
+    return rs
+
+def ci(y, f):
+    #start_time = time.time()
+    #print("NEW CI START!")
+    y = np.asarray(y)
+    f = np.asarray(f)
+    ind = np.argsort(y)
+    y = y[ind]
+    f = f[ind]
+    n = len(y)
+    c, d = 0, 0
+    z = 0.0
+    S = 0.0
+
+    for i in range(n - 1):
+        for j in range(i + 1, n):
+            if y[i] != y[j]:
+                z += 1
+                if f[i] < f[j]:
+                    S += 1
+                elif f[i] == f[j]:
+                    S += 0.5
+    if z > 0:
+        ci = S / z
+    else:
+        ci = 0.0
+    return ci
