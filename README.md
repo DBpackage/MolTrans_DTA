@@ -5,12 +5,52 @@ Drug target interaction (DTI) prediction is a foundational task for in-silico dr
 
 ## Datasets
 
-In the dataset folder, we provide all three processed datasets used in MolTrans: BindingDB, DAVIS, and BIOSNAP. In BIOSNAP folder, there is full dataset for the main experiment, and also missing data experiment (70%, 80%, 90%, 95%) and unseen drug and unseen protein datasets.
+In the dataset folder, I added a Mydata/Mydata.csv file for running both classification/regression. You can make your own dataset for running too.
+Just make csv file with this format 
+
+| SMILES  | Target Sequence | pka | Label |
+| ------------- | ------------- |------------- |------------- |
+| COc1cc(CCCOC(=O)  | MDVLSPGQGNNTTS  |10.34969248 | 1 |
+| OC(=O)C=C | MSWATRPPF  |5.568636236 | 0
+
+You can make Label column from pka column by setting any threshold value.
+Make Mydata.csv file and just replace it. then you can simply run...
+
+INDEED you can make other directories or other csv files, but if you want to make your own directory, then you need to fix some codes in train.py for data importing.
+
+1. def get_task(task_name):
+2. line 165 ~ 177
+
+Should be adjusted to your data names.
+
 
 ## Run
 
-We provide an example jupyter notebook in the repository. Although it runs for 100 epochs, we find 50 epochs is way enough and all the results in paper are run by 50 epochs. 
+if you want to run regression mode, then
 
-You can also directly run `python train.py --task ${task_name}` to run the experiments. `${task_name}` could either be `biosnap`,`bindingdb` , and `davis`. For the BindingDB and DAVIS, please refer this [Page](https://zitniklab.hms.harvard.edu/TDC/multi_pred_tasks/dti/) for more details.
+**python train.py --task mydata -b 4 --mode regression -rs 42**
 
-Will add more codes and tests in the next couple of weeks. But this should be enough to try on MolTrans.
+else you want to run classification mode, then
+
+**python train.py --task mydata -b 4 --mode classification -rs 42**
+
+There are some arguements for running models.
+
+```
+parser.add_argument('-m', '--mode', type=str, default='classification', choices=['classification','regression'])
+parser.add_argument('-b', '--batch-size', default=16, type=int,
+                    metavar='N',
+                    help='mini-batch size (default: 16), this is the total '
+                         'batch size of all GPUs on the current node when '
+                         'using Data Parallel or Distributed Data Parallel')
+parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
+                    help='number of data loading workers (default: 0)')
+parser.add_argument('--epochs', default=100, type=int, metavar='N',
+                    help='number of total epochs to run')
+parser.add_argument('--task', choices=['biosnap', 'bindingdb', 'davis', 'mydata'],
+                    default='', type=str, metavar='TASK',
+                    help='Task name. Could be biosnap, bindingdb and davis.')
+parser.add_argument('-lr', '--learning-rate', default=1e-4, type=float,
+                    metavar='LR', help='initial learning rate', dest='lr')
+parser.add_argument('--random_state', '-rs', default=42, type=int)
+```
