@@ -8,6 +8,11 @@ from sklearn.preprocessing import OneHotEncoder
 
 from subword_nmt.apply_bpe import BPE
 import codecs
+from math import sqrt
+from scipy import stats
+import torch
+from sklearn.metrics import auc, mean_absolute_error, mean_squared_error, precision_recall_curve, r2_score,\
+    roc_auc_score, accuracy_score, log_loss, roc_curve, precision_score, recall_score
 
 vocab_path = './ESPF/protein_codes_uniprot.txt'
 bpe_codes_protein = codecs.open(vocab_path)
