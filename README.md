@@ -16,7 +16,7 @@ Just make csv file with this format
 You can make Label column from pka column by setting any threshold value.
 Make Mydata.csv file and just replace the Mydata.csv which is I uploaded.
 
-INDEED you can make other directories or other csv files, but if you want to make your own directory, then you need to fix some codes in train.py for data importing.
+INDEED you can make other directories or other csv file names, but if you want to do, then you need to fix some codes in train.py for data importing.
 
 1. def get_task(task_name):
 2. line 165 ~ 177
